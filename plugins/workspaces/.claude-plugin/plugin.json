@@ -1,0 +1,7 @@
+{
+  "name": "workspaces",
+  "description": "Company-neutral rules for working across multiple Claude workspaces on one machine.",
+  "version": "1.0.0",
+  "author": { "name": "Dan Spray" },
+  "skills": "./skills"
+}

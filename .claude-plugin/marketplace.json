@@ -1,0 +1,15 @@
+{
+  "name": "claude-workspaces",
+  "description": "Company-neutral workspace rules, installed as a personal marketplace in every Claude account.",
+  "version": "1.0.0",
+  "owner": { "name": "Dan Spray" },
+  "plugins": [
+    {
+      "name": "workspaces",
+      "source": "./plugins/workspaces",
+      "description": "Company-neutral rules for working across multiple Claude workspaces on one machine.",
+      "version": "1.0.0",
+      "category": "reference"
+    }
+  ]
+}
