@@ -1,6 +1,6 @@
 ---
 name: workspace-model
-version: 2026.09.24
+version: 2026.11.19
 type: reference
 description: >
   Company-neutral rules for multiple Claude workspaces (home, client) on one
@@ -104,7 +104,9 @@ A workspace-aware toolset typically provides:
   Claude config is signed into the expected account; cloud CLI identity matches the
   registry; source-control CLI identity is asserted **first**, then scope probes (what
   it should and shouldn't be able to read) run against that asserted identity — an
-  isolation test run before confirming identity proves nothing about isolation; cloud
+  isolation test run before confirming identity proves nothing about isolation; for a
+  client workspace, also that the source-control CLI reads its token from that
+  workspace's own file (section 6, "Source-control sign-in"); cloud
   account ID matches the registry, marked inconclusive rather than failed when the
   registry has no ID recorded yet or the session has expired; the root exists.
 - Rules that make every such tool paste-safe: no argument starts with a dash, and no
@@ -130,6 +132,33 @@ A workspace-aware toolset typically provides:
   home account names, home machine names, or home tooling internals travel into a
   client org. This is exactly the discipline this skill itself follows: it is
   installed everywhere and names none of it.
+- **Source-control sign-in: home and client differ, on purpose.** A source-control CLI
+  commonly keeps one credential slot per username (for example in the operating
+  system's keychain), shared by every workspace on that machine that signs in as that
+  username. Two workspaces using the same username therefore share one token unless a
+  workspace's own file holds its token.
+  - **Home workspaces** use the tool's interactive (browser) sign-in, kept in that
+    shared slot. A fine-grained token has exactly one resource owner, and a home
+    workspace needs more than one.
+  - **A client workspace** uses a fine-grained token whose only resource owner is the
+    client's own organization, kept in that workspace's own config folder as the
+    top-level token entry (never in the shared slot), pasted at the tool's own prompt
+    (never through the browser, never through the clipboard). Its git is pinned the
+    same way by a per-client git config file: a per-folder include placed last in the
+    global git config, URL rules for the client's organization, the credential helper
+    cleared then pinned to the client's config folder, the client's own commit email,
+    and no route that could send another organization's URLs out under the operator's
+    own identity (a global rewrite to SSH does exactly that unless the client folder
+    blocks it).
+  - **After every client sign-in, check all three:** the tool reports the client's own
+    file as the token source (not the keychain); that file holds the token as its
+    top-level entry (a nested per-user entry alone leaves the shared slot active); and
+    a read of a home repository is refused. Then re-run the identity check for the
+    home workspaces on that machine: a wrong client sign-in shows up there first.
+  - **Never** sign out the shared username (it deletes the slot the home workspaces
+    read), sign in under the tool's default config folder except for the machine's own
+    default workspace, run the tool's global git-credential setup, or copy the shared
+    slot's token into a client folder.
 - **Only the operator's own credentials cross workspaces.** A shared team-wide gateway
   or service credential never gets access to a client org — client access is always the
   operator's individual identity, scoped to that client.
